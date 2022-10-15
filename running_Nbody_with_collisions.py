@@ -70,6 +70,7 @@ def plot_snapshot(bodies):
     plt.show()
 
 plot_snapshot(stars)
+initial_total_energy = stars.potential_energy() + stars.kinetic_energy()
 
 #stopping conditions
 stopping_condition = gravity.stopping_conditions.collision_detection
@@ -87,12 +88,15 @@ def merge_two_stars(bodies, particles_in_encounter):
 
     new_particle = Particles(1)
     new_particle.mass = particles_in_encounter.total_mass()
-    new_particle.age = min(particles_in_encounter.age)*max(particles_in_encounter.mass)/new_particle.mass   
+    new_particle.mass = max(particles_in_encounter.mass) + 0.5*min(particles_in_encounter.mass)
+    # new_particle.age = min(particles_in_encounter.age)*max(particles_in_encounter.mass)/new_particle.mass   
     new_particle.position = com_pos
     new_particle.velocity = com_vel
     new_particle.radius = particles_in_encounter.radius.sum()
     bodies.add_particles(new_particle)
     bodies.remove_particles(particles_in_encounter)
+    position = com_pos - bodies.center_of_mass()
+    return position
 
 def resolve_collision(collision_detection, gravity, stellar, bodies):
     f = 0
@@ -104,7 +108,8 @@ def resolve_collision(collision_detection, gravity, stellar, bodies):
             encountering_particles = Particles(particles = [collision_detection.particles(0)[ci],
                                                             collision_detection.particles(1)[ci]])
             colliding_stars = encountering_particles.get_intersecting_subset_in(bodies)
-            merge_two_stars(bodies, colliding_stars)
+            position = merge_two_stars(bodies, colliding_stars)
+            print("Position of collision from the center of mass: ", position.in_(units.au))
             bodies.synchronize_to(gravity.particles)
             bodies.synchronize_to(stellar.particles)
     return f
@@ -126,6 +131,7 @@ while (model_time < end_time):
     f = resolve_collision(stopping_condition, gravity, stellar, stars)
     number_of_collisions += f
     channel["from_gravity"].copy()
+    
 
     if model_time >= t_diag:
         t_diag += 1 | units.Myr
@@ -153,7 +159,22 @@ plt.show()
 print("Number of collisions: ", number_of_collisions)
 # stars not on the main sequence are giants
 # locations of collisions wrt density centre, the core radius, and the core density
-help(stars.densitycentre_coreradius_coredens)
+# a, b, c = stars.densitycentre_coreradius_coredens()
 
 # assignment 1:
+# check returned position 
+# energy dissipated
+final_total_energy = stars.potential_energy() + stars.kinetic_energy()
+energy_lost = final_total_energy - initial_total_energy
+print("Energy lost in collisions: ", energy_lost.in_(units.J))
+#numerical energy error
+energy_error_fraction = (final_total_energy - initial_total_energy)/initial_total_energy
+print("Numerical energy error: ", energy_error_fraction)
+#number doesn't look promising
 
+#assignment 2, 3
+# no difference in number of collisions
+# energy lost is lesser in the 2nd case
+# no changes in HR diagram
+
+#assignment 4: find the what of the brightest star? (position? how to identify it?)
