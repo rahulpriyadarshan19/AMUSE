@@ -4,14 +4,15 @@ import matplotlib.pyplot as plt
 from amuse.units import units
 from amuse.ext.star_to_sph import (pickle_stellar_model, convert_stellar_model_to_SPH,)
 from amuse.test.amusetest import get_path_to_results
-from amuse.community.mesa.interface import MESA
+from amuse.community.mesa_r2208.interface import MESA
 from amuse.datamodel import Particles
 from amuse.community.fi.interface import Fi
 from amuse.lab import nbody_system
 from amuse.datamodel import Grid, new_regular_grid
 
 # def setup_stellar_evolution_model():
-#     out_pickle_file = os.path.join(get_path_to_results(), "super_giant_stellar_structure.pkl")
+#     out_pickle_file = os.path.join(get_path_to_results(), 
+#                                    "super_giant_stellar_structure.pkl")
 
 #     stellar_evolution = MESA(redirection = "none")
 #     stars = Particles(1)
@@ -37,7 +38,7 @@ from amuse.datamodel import Grid, new_regular_grid
 pickle_file = './super_giant_stellar_structure.pkl'
 print("Star generated. ")
 
-number_of_sph_particles = 100
+number_of_sph_particles = 1000
 print(pickle_file)
 print("Creating initial conditions from a MESA stellar evolution model...")
 model = convert_stellar_model_to_SPH(
@@ -79,7 +80,7 @@ inject_supernova_energy(gas_without_core, exploding_region=1|units.RSun)
 
 converter = nbody_system.nbody_to_si(10|units.MSun, core_radius)
 
-hydro_code = Fi(converter)
+hydro_code = Fi(converter, mode = "openmp")
 hydro_code.parameters.epsilon_squared = core_radius**2
 hydro_code.parameters.n_smooth_tol = 0.01
 hydro_code.gas_particles.add_particles(gas_without_core)
@@ -133,7 +134,9 @@ def hydro_plot(hydro_code, view_size, npixels):
     
     
     plt.figure(figsize=(npixels/100.0, npixels/100.0), dpi=100)
+    # plt.show()
     plt.imshow(rgba)
+    plt.show()
 
 hydro_code.evolve_model(10.0|units.s)
 print("Done running to time=", hydro_code.model_time.in_(units.s))
@@ -163,4 +166,14 @@ print("core=", hydro_code.dm_particles.velocity.length().in_(units.kms))
 print("core=", hydro_code.dm_particles.position.length().in_(units.RSun))
 
 hydro_code.stop()
+
+# assignment 1: increasing particles and parallelising code increases code performance
+
+# assignment 2:
+
+# question 2: defining an inner region such that only those particles inside that
+# region are given the energy generated from the supernova
+
+
+
 
